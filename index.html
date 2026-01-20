@@ -17,9 +17,10 @@
             gap: 20px; /* Adds space between the containers */
             justify-content: flex-start; /* Prevents clipping at the top */
             align-items: center;
-            min-height: 100vh;
-            padding-bottom: 20px;
-            padding-top: 20px;
+        min-height: calc(100vh - 60px); /* Adjust for fixed appbar height */
+        padding: 20px 15px; /* Add horizontal padding for mobile */
+        width: 100%;
+        box-sizing: border-box; /* Ensure padding is included in width */
         }
         @keyframes disco {
             0% { border-color: #ff0000; box-shadow: 0 0 5px #ff0000; }

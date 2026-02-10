@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="appbar">
+        <h2>Payment</h2>
+    </div>
+    <div class="main-content">
+        <div class="container">
+            <h2>Complete Payment</h2>
+            <h1>package details</h1>
+            <p>duration: <span id="duration" style="margin-left: 100px;">1 day</span></p>
+            <p>datalimit: <span id="datalimit" style="margin-left: 100px;">Unlimited</span></p>
+            <p>speedlimit: <span id="speedlimit" style="margin-left: 100px;">Unlimited</span></p>
+            <h4> UGX <span id="amount">1000</span></h4>
+            <form id="loginForm" action="#" method="POST">
+                <label for="phoneNumber">Mobile Money Number*</label>
+                <input type="text" id="phoneNumber" name="phoneNumber" placeholder="Enter phone number" required>
+                <div id="paymentMessage" style="color: red; margin-top: 5px; font-size: 14px;"></div>
+                <button type="submit">Pay</button>
+            </form>
+            <p>Please follow the instructions on your phone to complete the mobile money transaction.</p>
+            <button onclick="window.location.href='index.html'" style="width: 100%;">Back to Home</button>
+        </div>
+    </div>
+    <script src="pay.js"></script>
+    <script>
+        // Function to get URL parameters
+        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            var results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+
+        // Set the package details from URL parameters
+        document.getElementById('duration').innerText = getUrlParameter('duration') || '1 day';
+        document.getElementById('datalimit').innerText = getUrlParameter('datalimit') || 'Unlimited';
+        document.getElementById('speedlimit').innerText = getUrlParameter('speedlimit') || 'Unlimited';
+        document.getElementById('amount').innerText = getUrlParameter('amount') || '1000';
+    </script>
+</body>
+</html>

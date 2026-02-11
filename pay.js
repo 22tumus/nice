@@ -45,7 +45,7 @@ if (form)
     var payload = { phone_number: phoneNumber, amount: Number(amount) };
     console.log("Sending payload:", payload);
 
-    fetch('https://backend-wifi.onrender.com/api/pay', {
+    fetch('https://backend.tumusiimesadas.com/api/pay', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'

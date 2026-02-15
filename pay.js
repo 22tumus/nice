@@ -2,81 +2,111 @@
 console.log("pay.js loaded");
 
 var form = document.getElementById('loginForm');
-console.log("Form element:", form);
-if (form) 
-    form.addEventListener('submit', function(e) {
+
+if (form) {
+    form.addEventListener('submit', async function(e) {
         e.preventDefault();
-        console.log("Form submitted. Starting payment process...");
 
-    var phoneInput = document.getElementById('phoneNumber');
-    var phoneNumber = phoneInput.value.trim();
-    // Get amount from the displayed amount
-    var amount = document.getElementById('amount').innerText;
+        var phoneInput = document.getElementById('phoneNumber');
+        var phoneNumber = phoneInput.value.trim();
+        var amountText = document.getElementById('amount').innerText;
+        var amount = amountText.replace(/[^0-9]/g, ''); 
 
-    console.log("Received phone number:", phoneNumber);
-    console.log("Received amount:", amount);
-    // Find the button that submitted the form (handles button or input)
-    var payButton = e.submitter || this.querySelector('button[type="submit"]') || this.querySelector('input[type="submit"]');
-    var textProp = (payButton && payButton.tagName === 'INPUT') ? 'value' : 'innerText';
-    var originalText = payButton ? payButton[textProp] : "";
-    var messageDiv = document.getElementById('paymentMessage');
+        var payButton = e.submitter || this.querySelector('button[type="submit"]');
+        var textProp = (payButton && payButton.tagName === 'INPUT') ? 'value' : 'innerText';
+        var originalText = payButton ? payButton[textProp] : "";
+        var messageDiv = document.getElementById('paymentMessage');
 
-    messageDiv.innerText = ""; // Clear previous messages
-    messageDiv.style.color = "red";
+        messageDiv.innerText = ""; 
+        messageDiv.style.color = "blue"; // Set to blue for "Processing" state
 
-    // Validate phone number (must be 10 digits)
-    if (phoneNumber.length !== 10 || isNaN(phoneNumber)) {
-        messageDiv.innerText = "Please enter a valid 10-digit phone number";
-        return;
-    }
+        if (phoneNumber.length !== 10 || isNaN(phoneNumber)) {
+            messageDiv.style.color = "red";
+            messageDiv.innerText = "Please enter a valid 10-digit phone number";
+            return;
+        }
 
-    if (phoneNumber.startsWith('0')) {
-        phoneNumber = "+256" + phoneNumber.substring(1);
-    }
+        let formattedPhone = phoneNumber;
+        if (phoneNumber.startsWith('0')) {
+            formattedPhone = "+256" + phoneNumber.substring(1);
+        }
 
-    // Disable button and show loading state
-    if (payButton) {
-        payButton.disabled = true;
-        payButton[textProp] = "Processing...";
-    }
+        if (payButton) {
+            payButton.disabled = true;
+            payButton[textProp] = "Processing...";
+        }
 
-    // Call Payment API
-    // Replace 'YOUR_PAYMENT_API_URL_HERE' with your actual server endpoint
-    var payload = { phone_number: phoneNumber, amount: Number(amount) };
-    console.log("Sending payload:", payload);
+        var payload = { phone_number: formattedPhone, amount: Number(amount) };
 
-    fetch('https://backend.tumusiimesadas.com/api/pay', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload),
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log("API response data:", data);
-        console.log("Type of data:", typeof data);
-        if (data.success) {
-            // Payment Succeeded: Login to MikroTik
-            // Assuming the API returns the username/password or we use the phone number
-            var user = data.username || phoneNumber;
-            var pass = data.password || phoneNumber;
-            window.location.href = "http://192.168.88.1/login?username=" + encodeURIComponent(user) + "&password=" + encodeURIComponent(pass);
-        } else {
-            // Payment Failed: Show reason
-            messageDiv.innerText = "Payment failed: " + (data.message || "Unknown error");
+        const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+        try {
+            // 1. Initial POST request
+            const postResponse = await fetch('https://backend.tumusiimesadas.com/api/pay', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            
+            // Avoid crashing if response is empty
+            await postResponse.json().catch(() => ({}));
+
+            // 2. The 6-second Polling Loop
+            let found = false;
+            let attempts = 0;
+            const maxAttempts = 20;
+
+            while (!found && attempts < maxAttempts) {
+                attempts++;
+                messageDiv.innerText = `Waiting for payment confirmation... (Attempt ${attempts}/20)`;
+                
+                await sleep(6000); 
+
+                // CORRECTED URL: Removed curly braces, added ?amount=
+                const url = `https://backend.tumusiimesadas.com/api/filter?amount=${amount}`
+                console.log("Checking URL:", url);
+
+                const getResponse = await fetch(url);
+                
+                // Safety check to handle HTML error pages
+                const responseText = await getResponse.text();
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (parseError) {
+                    console.error("Server returned HTML instead of JSON. Check backend route.");
+                    continue; // Skip this attempt and try again in 6s
+                }
+
+                console.log("Response data:", data);
+
+                // 3. Logic to read: { "message": "success", "code": "34" }
+                if (data && data.message === "success" && data.code) {
+                    found = true;
+                    const voucherCode = data.code; 
+                    
+                    console.log("Success! Voucher Code is:", voucherCode);
+                    
+                    // Redirect to MikroTik: Code as username, Code as password
+                    window.location.href = "http://192.168.88.1/login?username=" + encodeURIComponent(voucherCode) +  "&password=" + encodeURIComponent(voucherCode);
+                    return; 
+                }
+            }
+
+            if (!found) {
+                messageDiv.style.color = "red";
+                messageDiv.innerText = "Payment not detected. If you were charged, please contact support.";
+            }
+
+        } catch (error) {
+            console.error('Error:', error);
+            messageDiv.style.color = "red";
+            messageDiv.innerText = "Connection error. Please try again.";
+        } finally {
             if (payButton) {
                 payButton.disabled = false;
                 payButton[textProp] = originalText;
             }
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        messageDiv.innerText = "Connection error. Please try again.";
-        if (payButton) {
-            payButton.disabled = false;
-            payButton[textProp] = originalText;
-        }
     });
-});
+}

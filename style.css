@@ -1,6 +1,6 @@
 body {
     font-family: Arial, sans-serif;
-    background:url(http://www.shukatsu-note.com/wp-content/uploads/2014/12/computer-564136_1280.jpg) no-repeat;
+    background:url(https://res.cloudinary.com/dwbux0y8t/image/upload/v1759849610/samples/dessert-on-a-plate.jpg) no-repeat;
     background-size: cover;
     display: block;
     min-height: 100vh;
@@ -52,7 +52,7 @@ body {
 
 h1, h2, h3 {
     text-align: center;
-    color: #333;
+    color:aqua;
 }
 
 form {

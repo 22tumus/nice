@@ -1,6 +1,8 @@
 body {
     font-family: Arial, sans-serif;
     background:url(dessert-on-a-plate.jpg) no-repeat;
+    background-attachment: fixed;
+    background-position: center;
     background-size: cover;
     display: block;
     min-height: 100vh;

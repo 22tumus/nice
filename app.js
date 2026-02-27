@@ -9,8 +9,24 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
     window.location.href = "http://192.168.88.1/login?username=" + encodeURIComponent(voucher) + "&password=" + encodeURIComponent(voucher);
 });
 
-var FALLBACK_VIDEO_URL = 'elephanths.mp4';
+var FALLBACK_VIDEO_URL = 'elephanth.mp4';
 var FALLBACK_BG_URL = 'dessert-on-a-plate.jpg';
+var MEDIA_FETCH_TIMEOUT_MS = 5000;
+
+async function fetchWithTimeout(url, options, timeoutMs) {
+    var controller = new AbortController();
+    var timer = setTimeout(function() {
+        controller.abort();
+    }, timeoutMs);
+
+    try {
+        var requestOptions = options || {};
+        requestOptions.signal = controller.signal;
+        return await fetch(url, requestOptions);
+    } finally {
+        clearTimeout(timer);
+    }
+}
 
 function renderPackages(packages) {
     var packagesContainer = document.getElementById('packagesContainer');
@@ -116,7 +132,7 @@ async function loadPromoVideo() {
         var apiUrl = 'https://backend.tumusiimesadas.com/api/media?type=video';
         if (status) status.textContent = 'Loading video...';
 
-        var response = await fetch(apiUrl, { cache: 'no-store' });
+        var response = await fetchWithTimeout(apiUrl, { cache: 'no-store' }, MEDIA_FETCH_TIMEOUT_MS);
         if (!response.ok) throw new Error('Media failed');
 
         var contentType = response.headers.get('content-type') || '';
@@ -167,7 +183,7 @@ async function loadBackgroundImage() {
         document.body.style.backgroundImage = 'url("' + FALLBACK_BG_URL + '")';
 
         var apiUrl = 'https://backend.tumusiimesadas.com/api/media?type=image';
-        var response = await fetch(apiUrl, { cache: 'no-store' });
+        var response = await fetchWithTimeout(apiUrl, { cache: 'no-store' }, MEDIA_FETCH_TIMEOUT_MS);
         if (!response.ok) throw new Error('Image media failed');
 
         var contentType = response.headers.get('content-type') || '';

@@ -10,7 +10,7 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
 });
 
 var FALLBACK_VIDEO_URL = 'elephanth.mp4';
-var FALLBACK_BG_URL = './dessert-on-a-plate.jpg';
+var FALLBACK_BG_URL = 'dessert-on-a-plate.jpg';
 var MEDIA_FETCH_TIMEOUT_MS = 5000;
 
 async function fetchWithTimeout(url, options, timeoutMs) {

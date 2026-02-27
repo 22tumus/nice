@@ -73,7 +73,7 @@ async function loadPackages() {
             : (Array.isArray(data.packages) ? data.packages : (Array.isArray(data.data) ? data.data : []));
         renderPackages(packages);
     } catch (error) {
-        packagesContainer.innerHTML = '<p style="color: red;">Failed to load packages: ' + (error && error.message ? error.message : 'Unknown error') + '</p>';
+        packagesContainer.innerHTML = '<p style="color: red;">Failed to load packages: </p>';
         console.error(error);
     }
 }

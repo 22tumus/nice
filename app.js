@@ -78,6 +78,102 @@ async function loadPackages() {
     }
 }
 
+async function loadPromoVideo() {
+    var video = document.getElementById('promoVideo');
+    var status = document.getElementById('promoVideoStatus');
+    if (!video) return;
+
+    video.onerror = function() {
+        var code = video.error ? video.error.code : 0;
+        var reason = 'unknown';
+        if (code === 1) reason = 'aborted';
+        if (code === 2) reason = 'network';
+        if (code === 3) reason = 'decode';
+        if (code === 4) reason = 'source not supported';
+        if (status) status.textContent = 'Video element error: ' + reason + ' (code ' + code + ')';
+    };
+
+    video.onloadeddata = function() {
+        if (status) status.textContent = 'Video ready.';
+    };
+
+    try {
+        var apiUrl = 'https://backend.tumusiimesadas.com/api/media?type=video';
+        if (status) status.textContent = 'Loading video...';
+
+        var response = await fetch(apiUrl, { cache: 'no-store' });
+        if (!response.ok) throw new Error('Media failed');
+
+        var contentType = response.headers.get('content-type') || '';
+        var data;
+
+        if (contentType.indexOf('application/json') !== -1) {
+            data = await response.json();
+        } else {
+            var textBody = (await response.text()).trim();
+            if (!textBody) throw new Error('Empty media response');
+            try {
+                data = JSON.parse(textBody);
+            } catch (parseError) {
+                data = textBody;
+            }
+        }
+
+        if (!data || !Array.isArray(data.data) || !data.data[0] || !data.data[0].secureUrl) {
+            throw new Error('Missing data[0].secureUrl in media response');
+        }
+
+        var mediaUrl = String(data.data[0].secureUrl || '').trim();
+
+        if (!mediaUrl || !/^https:\/\//i.test(mediaUrl)) {
+            throw new Error('data[0].secureUrl must be an https URL');
+        }
+
+        // Set both to avoid browser quirks with dynamic <source> updates.
+        video.src = mediaUrl;
+        if (status) status.textContent = 'Video loaded.';
+        video.load();
+        video.play().catch(function() {
+            // Autoplay may be blocked by browser policies; controls remain available.
+        });
+    } catch (error) {
+        if (status) status.textContent = 'Failed to load video: ' + error.message;
+        console.error('Failed to load secure media URL:', error);
+    }
+}
+
+async function loadBackgroundImage() {
+    try {
+        var apiUrl = 'https://backend.tumusiimesadas.com/api/media?type=image';
+        var response = await fetch(apiUrl, { cache: 'no-store' });
+        if (!response.ok) throw new Error('Image media failed');
+
+        var contentType = response.headers.get('content-type') || '';
+        var data;
+
+        if (contentType.indexOf('application/json') !== -1) {
+            data = await response.json();
+        } else {
+            var textBody = (await response.text()).trim();
+            if (!textBody) throw new Error('Empty image media ');
+            data = JSON.parse(textBody);
+        }
+
+        if (!data || !Array.isArray(data.data) || !data.data[0] || !data.data[0].secureUrl) {
+            throw new Error('Missing data[0].secureUrl in image response');
+        }
+
+        var imageUrl = String(data.data[0].secureUrl || '').trim();
+        if (!/^https:\/\//i.test(imageUrl)) {
+            throw new Error('data[0].secureUrl for image must be an https URL');
+        }
+       //load image direct in style.css body
+        document.body.style.backgroundImage = 'url("' + imageUrl + '")';
+    } catch (error) {
+        console.error('Failed to load secure background image:', error);
+    }
+}
+
 document.addEventListener('click', function(e) {
     var button = e.target.closest('.payMobile');
     if (!button) return;
@@ -91,3 +187,5 @@ document.addEventListener('click', function(e) {
 });
 
 loadPackages();
+loadPromoVideo();
+loadBackgroundImage();

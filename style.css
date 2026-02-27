@@ -1,6 +1,7 @@
 body {
     font-family: Arial, sans-serif;
-    background:url(dessert-on-a-plate.jpg) no-repeat;
+    background-color: #f2f2f2;
+    background-repeat: no-repeat;
     background-attachment: fixed;
     background-position: center;
     background-size: cover;

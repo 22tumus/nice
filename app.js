@@ -9,6 +9,9 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
     window.location.href = "http://192.168.88.1/login?username=" + encodeURIComponent(voucher) + "&password=" + encodeURIComponent(voucher);
 });
 
+var FALLBACK_VIDEO_URL = 'elephanth.mp4';
+var FALLBACK_BG_URL = 'dessert-on-a-plate.jpg';
+
 function renderPackages(packages) {
     var packagesContainer = document.getElementById('packagesContainer');
     if (!packagesContainer) return;
@@ -90,7 +93,19 @@ async function loadPromoVideo() {
         if (code === 2) reason = 'network';
         if (code === 3) reason = 'decode';
         if (code === 4) reason = 'source not supported';
-        if (status) status.textContent = 'Video element error: ' + reason + ' (code ' + code + ')';
+
+        // Captive portal browsers often block remote media. Fall back to local file once.
+        if (video.dataset.fallbackApplied !== '1') {
+            video.dataset.fallbackApplied = '1';
+            video.src = FALLBACK_VIDEO_URL;
+            video.load();
+            if (status) status.textContent = 'Video loaded.';
+            video.play().catch(function() {});
+            return;
+        }
+
+        if (status) status.textContent = 'Video failed to load.';
+        console.error('Video element error:', reason, code);
     };
 
     video.onloadeddata = function() {
@@ -129,7 +144,7 @@ async function loadPromoVideo() {
             throw new Error('data[0].secureUrl must be an https URL');
         }
 
-        // Set both to avoid browser quirks with dynamic <source> updates.
+        video.dataset.fallbackApplied = '0';
         video.src = mediaUrl;
         if (status) status.textContent = 'Video loaded.';
         video.load();
@@ -137,13 +152,20 @@ async function loadPromoVideo() {
             // Autoplay may be blocked by browser policies; controls remain available.
         });
     } catch (error) {
-        if (status) status.textContent = 'Failed to load video: ' + error.message;
+        video.dataset.fallbackApplied = '1';
+        video.src = FALLBACK_VIDEO_URL;
+        video.load();
+        if (status) status.textContent = 'Video loaded.';
+        video.play().catch(function() {});
         console.error('Failed to load secure media URL:', error);
     }
 }
 
 async function loadBackgroundImage() {
     try {
+        // Keep local fallback by default; replace only when secure image succeeds.
+        document.body.style.backgroundImage = 'url("' + FALLBACK_BG_URL + '")';
+
         var apiUrl = 'https://backend.tumusiimesadas.com/api/media?type=image';
         var response = await fetch(apiUrl, { cache: 'no-store' });
         if (!response.ok) throw new Error('Image media failed');
@@ -167,9 +189,10 @@ async function loadBackgroundImage() {
         if (!/^https:\/\//i.test(imageUrl)) {
             throw new Error('data[0].secureUrl for image must be an https URL');
         }
-       //load image direct in style.css body
+
         document.body.style.backgroundImage = 'url("' + imageUrl + '")';
     } catch (error) {
+        document.body.style.backgroundImage = 'url("' + FALLBACK_BG_URL + '")';
         console.error('Failed to load secure background image:', error);
     }
 }

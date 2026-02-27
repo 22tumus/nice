@@ -10,7 +10,7 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
 });
 
 var FALLBACK_VIDEO_URL = 'elephanth.mp4';
-var FALLBACK_BG_URL = 'dessert-on-a-plate.jpg';
+var FALLBACK_BG_URL = './dessert-on-a-plate.jpg';
 var MEDIA_FETCH_TIMEOUT_MS = 5000;
 
 async function fetchWithTimeout(url, options, timeoutMs) {
@@ -26,6 +26,29 @@ async function fetchWithTimeout(url, options, timeoutMs) {
     } finally {
         clearTimeout(timer);
     }
+}
+
+function loadImageOnce(src) {
+    return new Promise(function(resolve, reject) {
+        var img = new Image();
+        img.onload = function() { resolve(src); };
+        img.onerror = function() { reject(new Error('Image failed: ' + src)); };
+        img.src = src;
+    });
+}
+
+async function applyLocalBackgroundFallback() {
+    var candidates = [FALLBACK_BG_URL, 'dessert-on-a-plate.jpg', '/dessert-on-a-plate.jpg'];
+    for (var i = 0; i < candidates.length; i++) {
+        try {
+            var okSrc = await loadImageOnce(candidates[i]);
+            document.body.style.backgroundImage = 'url("' + okSrc + '")';
+            return;
+        } catch (e) {
+            // try next path candidate
+        }
+    }
+    document.body.style.backgroundImage = 'none';
 }
 
 function renderPackages(packages) {
@@ -180,7 +203,7 @@ async function loadPromoVideo() {
 async function loadBackgroundImage() {
     try {
         // Keep local fallback by default; replace only when secure image succeeds.
-        document.body.style.backgroundImage = 'url("' + FALLBACK_BG_URL + '")';
+        await applyLocalBackgroundFallback();
 
         var apiUrl = 'https://backend.tumusiimesadas.com/api/media?type=image';
         var response = await fetchWithTimeout(apiUrl, { cache: 'no-store' }, MEDIA_FETCH_TIMEOUT_MS);
@@ -208,7 +231,7 @@ async function loadBackgroundImage() {
 
         document.body.style.backgroundImage = 'url("' + imageUrl + '")';
     } catch (error) {
-        document.body.style.backgroundImage = 'url("' + FALLBACK_BG_URL + '")';
+        await applyLocalBackgroundFallback();
         console.error('Failed to load secure background image:', error);
     }
 }
@@ -228,3 +251,4 @@ document.addEventListener('click', function(e) {
 loadPackages();
 loadPromoVideo();
 loadBackgroundImage();
+

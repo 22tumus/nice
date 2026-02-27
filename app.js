@@ -229,6 +229,8 @@ async function loadBackgroundImage() {
             throw new Error('data[0].secureUrl for image must be an https URL');
         }
 
+        // Only replace local fallback if remote image can actually load.
+        await loadImageOnce(imageUrl);
         document.body.style.backgroundImage = 'url("' + imageUrl + '")';
     } catch (error) {
         await applyLocalBackgroundFallback();
@@ -251,4 +253,3 @@ document.addEventListener('click', function(e) {
 loadPackages();
 loadPromoVideo();
 loadBackgroundImage();
-

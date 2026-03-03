@@ -9,7 +9,7 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
     window.location.href = "http://192.168.88.1/login?username=" + encodeURIComponent(voucher) + "&password=" + encodeURIComponent(voucher);
 });
 
-var FALLBACK_VIDEO_URL = 'elephanths.mp4';
+var FALLBACK_VIDEO_URL = 'antlantic.mp4';
 var FALLBACK_BG_URL = 'dessert-on-a-plate.jpg';
 var MEDIA_FETCH_TIMEOUT_MS = 5000;
 

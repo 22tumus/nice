@@ -48,8 +48,16 @@ if (form) {
                 body: JSON.stringify(payload),
             });
             
-            // Avoid crashing if response is empty
-            await postResponse.json().catch(() => ({}));
+            // Extract reference + amount.raw from pay response for status polling.
+            const postData = await postResponse.json().catch(() => ({}));
+            const payReference =
+                (postData && postData.reference) ||
+                (postData && postData.provider_response && postData.provider_response.data && postData.provider_response.data.transaction && postData.provider_response.data.transaction.uuid) ||
+                (postData && postData.provider_response && postData.provider_response.data && postData.provider_response.data.transaction && postData.provider_response.data.transaction.reference) ||
+                "";
+            const rawAmount =
+                (postData && postData.provider_response && postData.provider_response.data && postData.provider_response.data.collection && postData.provider_response.data.collection.amount && postData.provider_response.data.collection.amount.raw) ||
+                String(amount);
 
             // 2. The 6-second Polling Loop
             let found = false;
@@ -62,8 +70,11 @@ if (form) {
                 
                 await sleep(6000); 
 
-                // CORRECTED URL: Removed curly braces, added ?amount=
-                const url = `https://backend.tumusiimesadas.com/api/filter?amount=${amount}`
+                const filterParams = new URLSearchParams({
+                    amount: String(rawAmount),
+                    reference: String(payReference)
+                });
+                const url = `https://backend.tumusiimesadas.com/api/filter?${filterParams.toString()}`;
                 console.log("Checking URL:", url);
 
                 const getResponse = await fetch(url);

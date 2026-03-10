@@ -51,10 +51,7 @@ if (form) {
             // Extract reference + amount.raw from pay response for status polling.
             const postData = await postResponse.json().catch(() => ({}));
             const payReference =
-                (postData && postData.reference) ||
-                (postData && postData.provider_response && postData.provider_response.data && postData.provider_response.data.transaction && postData.provider_response.data.transaction.uuid) ||
-                (postData && postData.provider_response && postData.provider_response.data && postData.provider_response.data.transaction && postData.provider_response.data.transaction.reference) ||
-                "";
+                (postData && postData.provider_response && postData.provider_response.data && postData.provider_response.data.transaction && postData.provider_response.data.transaction.reference) ||"";
             const rawAmount =
                 (postData && postData.provider_response && postData.provider_response.data && postData.provider_response.data.collection && postData.provider_response.data.collection.amount && postData.provider_response.data.collection.amount.raw) ||
                 String(amount);
@@ -74,7 +71,7 @@ if (form) {
                     amount: String(rawAmount),
                     reference: String(payReference)
                 });
-                const url = `https://backend.tumusiimesadas.com/api/filter?${filterParams.toString()}`;
+                const url = `https://backend.tumusiimesadas.com/api/filter?${filterParams}`;
                 console.log("Checking URL:", url);
 
                 const getResponse = await fetch(url);
